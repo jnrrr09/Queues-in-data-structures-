@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Service Desk Queue</title>
+<style>
+  #in{ margin-left:280px}
+:root{--bg:#f6f1e9;--ink:#26211c;--mute:#6b6258;--line:#d9cfc0;--card:#fffdf8;--acc:#0b7a75;--tick:#fff3d6;--tickb:#d9a441;--warn:#b3402a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17140f;--ink:#f1ebe0;--mute:#a79d8e;--line:#352e24;--card:#1f1a13;--acc:#3fc1b9;--tick:#2e2514;--tickb:#c8923a;--warn:#ff8a70}}
+:root[data-theme="dark"]{--bg:#17140f;--ink:#f1ebe0;--mute:#a79d8e;--line:#352e24;--card:#1f1a13;--acc:#3fc1b9;--tick:#2e2514;--tickb:#c8923a;--warn:#ff8a70}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:28px 18px 60px}
+h1{font:800 clamp(2rem,6vw,3.1rem)/1.05 "Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 10px}
+h2{font-size:1.15rem;margin:34px 0 10px}
+p{max-width:68ch;margin:0 0 12px}.mute{color:var(--mute)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px;font-size:.93rem}
+td,th{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input{font:inherit;padding:8px 10px;border:1px solid var(--ink);border-radius:5px;background:var(--bg);color:var(--ink);flex:1;min-width:160px}
+button{font:inherit;font-size:.92rem;padding:8px 14px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:5px;cursor:pointer}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 0 0 2px var(--line)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.stat b{display:block;font-size:1.7rem;line-height:1.1}.stat span{font-size:.8rem;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.counters{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:16px}
+.ctr{background:var(--card);border:2px solid var(--line);border-radius:8px;padding:12px}
+.ctr.busy{border-color:var(--acc)}.ctr h3{margin:0 0 4px;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.ctr .who{min-height:2.7em}.ctr button{margin-top:8px}
+.lane{display:flex;gap:10px;overflow-x:auto;padding:26px 4px 8px;min-height:130px;align-items:flex-start}
+.tk{flex:0 0 auto;min-width:120px;background:var(--tick);border:2px dashed var(--tickb);border-radius:8px;padding:8px 12px;position:relative}
+.tk b{font-size:1.2rem;display:block}.tk small{color:var(--mute)}
+.tag{position:absolute;top:-22px;left:0;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--acc)}
+.tag.r{left:auto;right:0}
+.empty{color:var(--mute);padding:20px 4px}
+pre{background:#14110c;color:#e8d9b8;padding:12px;border-radius:6px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;min-height:7em;margin:0;white-space:pre}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+.msg{color:var(--warn);min-height:1.4em;font-size:.9rem;margin:8px 0 0}
+</style>
+</head>
+<header id="in">PS/ITC/24/0222</header>
+<body>
+<main>
+<h1>Service Desk Queue</h1>
+<p>A queue is a line: the first to join is the first to be served. Below are the real-world places that depend on that rule, why a queue is the right structure, and a working ticket queue you can run.</p>
+
+<h2>Where queues are required</h2>
+<div class="tw"><table>
+<tr><th>Application</th><th>What waits in the queue</th><th>Why a queue</th></tr>
+<tr><td>Customer service and banks</td><td>Customers holding tickets</td><td>Fairness: whoever arrived first is served first.</td></tr>
+<tr><td>Printer spooling</td><td>Print jobs</td><td>The printer is slower than the users sending jobs, so jobs wait in arrival order.</td></tr>
+<tr><td>CPU and OS scheduling</td><td>Processes ready to run</td><td>Each process gets its turn in order (round-robin).</td></tr>
+<tr><td>Web servers and message brokers</td><td>Incoming requests and messages</td><td>Absorbs traffic bursts and decouples senders from workers.</td></tr>
+<tr><td>Streaming and networking</td><td>Packets and video frames</td><td>Data must be delivered in the order it was sent.</td></tr>
+<tr><td>Search algorithms (BFS)</td><td>Nodes waiting to be explored</td><td>Visiting nearest nodes first needs first-in, first-out order.</td></tr>
+<tr><td>Parking lot waiting list</td><td>Cars waiting for a free slot</td><td>The car that waited longest gets the next free space.</td></tr>
+</table></div>
+
+<h2>Why queues are necessary</h2>
+<p><b>Fairness by construction.</b> Order of arrival is the only rule, so no one can be skipped. <b>Rate matching.</b> When items arrive faster than they can be handled, a queue buffers them instead of dropping them. <b>Decoupling.</b> The side that adds work and the side that does it never need to wait for each other. <b>Speed.</b> Joining at the rear (<code>enqueue</code>) and leaving from the front (<code>dequeue</code>) both take constant time. A stack would serve the newest first, and a sorted list would be slower and break arrival order.</p>
+
+<h2>The build: a ticket queue for a service desk</h2>
+<p class="mute">Take a ticket to join at the rear. Call next to serve the front ticket at a free counter. The queue is a class with <code>enqueue</code>, <code>dequeue</code>, <code>front</code>, <code>size</code> and <code>isEmpty</code>.</p>
+
+<div class="panel">
+  <div class="row">
+    <input id="nm" placeholder="Customer name (optional)" maxlength="24" aria-label="Customer name">
+    <button class="p" id="join">Take ticket</button>
+    <button id="demo">Add 5 demo customers</button>
+  </div>
+  <div class="msg" id="msg" role="status"></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><b id="sSize">0</b><span>In queue</span></div>
+  <div class="stat"><b id="sServed">0</b><span>Served</span></div>
+  <div class="stat"><b id="sAvg">0s</b><span>Avg wait when called</span></div>
+  <div class="stat"><b id="sLong">0s</b><span>Longest wait now</span></div>
+</div>
+
+<div class="counters" id="ctrs"></div>
+
+<div class="panel">
+  <div class="row" style="justify-content:space-between"><b>The queue</b><button class="p" id="next">Call next</button></div>
+  <div class="lane" id="lane"></div>
+  <p class="mute" style="margin:6px 0 0;font-size:.85rem">Leaves from the front, joins at the rear.</p>
+</div>
+
+<pre id="log" aria-live="polite">// Operations appear here</pre>
+</main>
+<script>
+class Queue{
+  constructor(){this.items=[];this.head=0;}
+  enqueue(x){this.items.push(x);}
+  dequeue(){
+    if(this.isEmpty())return undefined;
+    const x=this.items[this.head++];
+    if(this.head>32&&this.head*2>this.items.length){this.items=this.items.slice(this.head);this.head=0;}
+    return x;
+  }
+  front(){return this.items[this.head];}
+  size(){return this.items.length-this.head;}
+  isEmpty(){return this.size()===0;}
+  toArray(){return this.items.slice(this.head);}
+}
+const q=new Queue(),counters=[null,null,null],waits=[];let n=0,served=0,logLines=[];
+const $=id=>document.getElementById(id);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
+const secs=ms=>Math.floor(ms/1000)+"s";
+function log(s){logLines.push(s);if(logLines.length>8)logLines.shift();$("log").textContent=logLines.join("\n");}
+function say(t){$("msg").textContent=t;}
+function join(name){
+  n++;const t={id:"T"+String(n).padStart(3,"0"),name:name||"Customer "+n,at:Date.now()};
+  q.enqueue(t);log("enqueue("+t.id+")    size = "+q.size());say("");render();
+}
+function callNext(){
+  const i=counters.indexOf(null);
+  if(q.isEmpty()){say("The queue is empty.");log("isEmpty() -> true");return;}
+  if(i<0){say("All counters are busy. Finish a customer first.");return;}
+  const t=q.dequeue();t.wait=Date.now()-t.at;waits.push(t.wait);counters[i]=t;
+  log("dequeue() -> "+t.id+"  size = "+q.size());say("");render();
+}
+function finish(i){const t=counters[i];served++;counters[i]=null;log("counter "+(i+1)+" finished "+t.id);render();}
+function render(){
+  const lane=$("lane");lane.replaceChildren();
+  const items=q.toArray(),now=Date.now();
+  if(!items.length)lane.appendChild(el("div","empty","No one is waiting."));
+  items.forEach((t,k)=>{
+    const c=el("div","tk");c.append(el("b",null,t.id),el("span",null,t.name),el("br"),el("small",null,"waiting "+secs(now-t.at)));
+    const last=k===items.length-1;
+    if(k===0)c.appendChild(el("span","tag",last?"FRONT + REAR":"FRONT"));
+    else if(last)c.appendChild(el("span","tag","REAR"));
+    lane.appendChild(c);
+  });
+  const box=$("ctrs");box.replaceChildren();
+  counters.forEach((t,i)=>{
+    const c=el("div","ctr"+(t?" busy":""));c.appendChild(el("h3",null,"Counter "+(i+1)));
+    c.appendChild(el("div","who",t?t.id+" · "+t.name:"Free"));
+    if(t){const b=el("button",null,"Finish");b.onclick=()=>finish(i);c.appendChild(b);}
+    box.appendChild(c);
+  });
+  $("sSize").textContent=q.size();$("sServed").textContent=served;
+  $("sAvg").textContent=waits.length?secs(waits.reduce((a,b)=>a+b,0)/waits.length):"0s";
+  $("sLong").textContent=items.length?secs(now-items[0].at):"0s";
+  $("next").disabled=q.isEmpty();
+}
+$("join").onclick=()=>{join($("nm").value.trim());$("nm").value="";$("nm").focus();};
+$("nm").onkeydown=e=>{if(e.key==="Enter")$("join").click();};
+$("next").onclick=callNext;
+$("demo").onclick=()=>["Ama","Kofi","Efua","Yaw","Akosua"].forEach(join);
+setInterval(render,1000);render();
+</script>
+</body>
+</html>
